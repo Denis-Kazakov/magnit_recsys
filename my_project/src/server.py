@@ -118,7 +118,6 @@ def show_file():
 
 @app.route("/start", methods=['GET'])
 def start_model():
-    print('Start')
     import sys
     import pandas as pd
     from surprise.dump import load
@@ -130,8 +129,6 @@ def start_model():
     full = pd.concat((train, test), axis=0, join='outer', ignore_index=True)
 
     model = load('my_project/model/model_svd')[1]
-    print('Model loaded')
-
 
     def prediction(JID, UID):
         return model.predict(str(int(UID)), str(int(JID))).est
@@ -150,7 +147,8 @@ def start_model():
         result.loc[missing, 'Rating'] = result.loc[missing, 'predicted_rating']
 
         best_joke_index = result.Rating.idxmax()
-        best_joke = result.JID[best_joke_index]
+        best_joke_number = result.JID[best_joke_index]
+        best_joke_rating = result.Rating[best_joke_index]
 
         #Downrate jokes that have already been rated
         rated = full.query('UID == @uid').drop(columns=['UID', 'Rating'])
@@ -162,17 +160,13 @@ def start_model():
         # Select top 10 jokes to recommend
         result.sort_values(by='Rating', ascending=False, inplace=True)
         top10 =  result.JID.iloc[0:10].tolist()
-        return [best_joke, top10]
+        return [{best_joke_number: best_joke_rating}, top10]
 
 
     # path = 'my_project/data/' + sys.argv[1]
     path = 'my_project/data/test.csv'
 
     df = pd.read_csv(path, index_col=0)
-    print('Input data loaded')
     df['recommendations'] = df.UID.apply(ranking)
     df.to_csv('my_project/data/recommendations.csv')
-    print(df)
-
-
     
